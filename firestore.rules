@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──
+    function isAuth() {
+      return request.auth != null;
+    }
+    function uid() {
+      return request.auth.uid;
+    }
+    // Admin check: relies on custom claim or user doc role field.
+    // For MVP, allow authorized users broadly; tighten after Functions migration.
+    function isProjectMember(projectId) {
+      return isAuth() && (
+        uid() in get(/databases/$(database)/documents/projects/$(projectId)).data.members
+      );
+    }
+
+    // ── Users ──
+    match /users/{userId} {
+      allow read: if isAuth();
+      allow write: if isAuth() && uid() == userId;
+    }
+
+    // ── Projects ──
+    match /projects/{projectId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && (
+        uid() in resource.data.members
+      );
+
+      // ── Docs ──
+      match /docs/{docId} {
+        allow read: if isAuth();
+        allow create: if isAuth();
+        allow update, delete: if isAuth();
+        // MVP: member check relaxed. Tighten:
+        // allow update, delete: if isProjectMember(projectId);
+      }
+
+      // ── History ──
+      // MVP: client writes history. Move to Cloud Functions for production.
+      match /history/{eventId} {
+        allow read: if isAuth();
+        allow create: if isAuth();
+        // Deny update/delete from client  
+        allow update, delete: if false;
+      }
+
+      // ── Exports ──
+      // MVP: client can create export records. Move to Cloud Functions for production.
+      match /exports/{exportId} {
+        allow read: if isAuth();
+        allow create: if isAuth();
+        allow update, delete: if false;
+      }
+    }
+  }
+}
