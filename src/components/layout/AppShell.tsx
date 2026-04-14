@@ -1,18 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { useAuthStore } from '@/lib/auth';
+import { useThemeStore } from '@/lib/theme';
 import Spinner from '@/components/ui/Spinner';
 import ProjectFormModal from '@/components/project/ProjectFormModal';
 import { projectsApi } from '@/lib/data/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import ConnectionStatus from '@/components/ui/ConnectionStatus';
 
 export default function AppShell() {
   const { user, loading } = useAuthStore();
   const [showCreate, setShowCreate] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const mode = useThemeStore((s) => s.mode);
   const qc = useQueryClient();
+
+  // Abrir modal via PWA shortcut
+  useEffect(() => {
+    const action = sessionStorage.getItem('ff_action');
+    if (action === 'new-project') {
+      sessionStorage.removeItem('ff_action');
+      setShowCreate(true);
+    }
+  }, []);
+
+  // Atalho global Ctrl+K para busca
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const createMut = useMutation({
     mutationFn: (input: Parameters<typeof projectsApi.createProject>[0]) =>
@@ -37,17 +63,17 @@ export default function AppShell() {
   return (
     <div
       className="min-h-screen relative"
-      style={{
+      style={mode === 'dark' ? {
         background: `
           radial-gradient(ellipse at 80% 15%, rgba(20, 85, 150, 0.18) 0%, transparent 50%),
           radial-gradient(ellipse at 20% 80%, rgba(208, 125, 95, 0.08) 0%, transparent 50%),
           radial-gradient(ellipse at 50% 50%, rgba(3, 45, 78, 0.4) 0%, transparent 70%),
-          #011938
+          var(--color-bg)
         `,
-      }}
+      } : { background: 'var(--color-bg)' }}
     >
-      {/* Stars overlay */}
-      <div
+      {/* Stars overlay — dark mode only */}
+      {mode === 'dark' && <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
           backgroundImage: `
@@ -68,16 +94,25 @@ export default function AppShell() {
             radial-gradient(2px 2px at 30% 95%, rgba(255,255,255,0.4), transparent)
           `,
         }}
-      />
+      />}
 
       {/* Topbar */}
-      <Topbar onNewProject={() => setShowCreate(true)} />
+      <Topbar
+        onNewProject={() => setShowCreate(true)}
+        onToggleSidebar={() => setIsSidebarOpen((v) => !v)}
+        searchOpen={searchOpen}
+        onOpenSearch={() => setSearchOpen(true)}
+        onCloseSearch={() => setSearchOpen(false)}
+      />
 
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
-      {/* Main content */}
-      <div className="pl-56 pt-0 min-h-[calc(100vh-72px)] relative z-10">
+      {/* Main content — pl-56 apenas em telas md+ */}
+      <div className="md:pl-56 pl-0 pt-0 min-h-[calc(100vh-72px)] relative z-10">
         <main className="p-8">
           <Outlet />
         </main>
@@ -102,9 +137,12 @@ export default function AppShell() {
         onClose={() => setShowCreate(false)}
         mode="create"
         onSubmit={async (data) => {
-          await createMut.mutateAsync({ ...data, members: [user!.uid] });
+          await createMut.mutateAsync(data);
         }}
       />
+
+      {/* Banner de status de conexão (Firebase only) */}
+      <ConnectionStatus />
     </div>
   );
 }

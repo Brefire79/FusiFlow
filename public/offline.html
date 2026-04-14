@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#011938" />
+  <title>FusiFlow — Sem conexão</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      background-color: #011938;
+      color: #D4CCC0;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    svg { opacity: 0.85; }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    p {
+      font-size: 0.95rem;
+      color: #9A9183;
+      max-width: 26rem;
+      line-height: 1.6;
+    }
+
+    button {
+      margin-top: 0.5rem;
+      padding: 0.65rem 1.75rem;
+      background-color: #C9A84C;
+      color: #011938;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    button:hover { opacity: 0.85; }
+    button:active { opacity: 0.7; transform: scale(0.97); }
+  </style>
+</head>
+<body>
+  <!-- Logo AMB FUSI AÍ inline -->
+  <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <rect width="64" height="64" rx="16" fill="#C9A84C" fill-opacity="0.12"/>
+    <path d="M20 44L32 20L44 44" stroke="#C9A84C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M24 37h16" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+
+  <div>
+    <h1>Você está offline</h1>
+  </div>
+
+  <p>Verifique sua conexão com a internet e tente novamente.<br/>Seu trabalho salvo continua disponível localmente.</p>
+
+  <button onclick="window.location.reload()">Tentar novamente</button>
+</body>
+</html>

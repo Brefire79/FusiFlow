@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { exportsApi } from '@/lib/data/api';
+import { exportsApi, projectsApi, docsApi } from '@/lib/data/api';
 import type { ExportFormat } from '@/lib/data/types';
 import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
-import { formatDate } from '@/lib/time';
-import { Download, FileJson, FileText, FileType } from 'lucide-react';
+import { ENV } from '@/lib/env';
+import { formatDate, nowISO } from '@/lib/time';
+import { Download, FileJson, FileText, FileType, Link2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface ExportsPanelProps {
@@ -20,6 +22,28 @@ const formatIcons: Record<string, typeof FileJson> = {
 
 export default function ExportsPanel({ projectId }: ExportsPanelProps) {
   const qc = useQueryClient();
+  const requiresFunctions = !ENV.useFirebase;
+  const [linkLoading, setLinkLoading] = useState(false);
+
+  async function handleShareLink() {
+    setLinkLoading(true);
+    try {
+      const [project, docs] = await Promise.all([
+        projectsApi.getProject(projectId),
+        docsApi.listDocs(projectId),
+      ]);
+      const bundle = { project, docs, exportedAt: nowISO() };
+      const json = JSON.stringify(bundle);
+      const b64 = btoa(unescape(encodeURIComponent(json)));
+      const url = `${window.location.origin}/view?data=${b64}`;
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copiado! Válido apenas neste dispositivo.');
+    } catch {
+      toast.error('Não foi possível gerar o link.');
+    } finally {
+      setLinkLoading(false);
+    }
+  }
 
   const { data: exports = [], isLoading } = useQuery({
     queryKey: ['exports', projectId],
@@ -52,6 +76,7 @@ export default function ExportsPanel({ projectId }: ExportsPanelProps) {
           <Button
             variant="ghost"
             onClick={() => exportMut.mutate('pdf')}
+            disabled={requiresFunctions}
             icon={<FileType className="h-4 w-4" />}
           >
             PDF
@@ -59,12 +84,19 @@ export default function ExportsPanel({ projectId }: ExportsPanelProps) {
           <Button
             variant="ghost"
             onClick={() => exportMut.mutate('docx')}
+            disabled={requiresFunctions}
             icon={<FileText className="h-4 w-4" />}
           >
             DOCX
           </Button>
         </div>
       </div>
+
+      {requiresFunctions && (
+        <p className="text-xs text-text-2 mb-4">
+          PDF/DOCX requer Firebase Functions. Ative VITE_USE_FIREBASE=true para habilitar.
+        </p>
+      )}
 
       {isLoading ? (
         <Spinner />
@@ -111,6 +143,22 @@ export default function ExportsPanel({ projectId }: ExportsPanelProps) {
           })}
         </div>
       )}
+
+      {/* Link de visualização */}
+      <div className="mt-8 pt-6 border-t border-border/20">
+        <h4 className="text-sm font-semibold text-text mb-1">Link de visualização</h4>
+        <p className="text-xs text-text-2 mb-3">
+          Gera um link somente-leitura com os dados atuais. Válido apenas neste dispositivo (localStorage).
+        </p>
+        <Button
+          variant="ghost"
+          onClick={handleShareLink}
+          loading={linkLoading}
+          icon={<Link2 className="h-4 w-4" />}
+        >
+          Gerar e copiar link
+        </Button>
+      </div>
     </div>
   );
 }

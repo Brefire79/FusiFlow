@@ -24,6 +24,60 @@ export default defineConfig({
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        categories: ['business', 'productivity'],
+        lang: 'pt-BR',
+        dir: 'ltr',
+        orientation: 'any',
+        shortcuts: [
+          {
+            name: 'Novo Projeto',
+            short_name: 'Novo',
+            description: 'Criar um novo projeto',
+            url: '/?action=new-project',
+            icons: [{ src: '/icon-192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Projetos',
+            short_name: 'Projetos',
+            description: 'Ver todos os projetos',
+            url: '/projects',
+            icons: [{ src: '/icon-192.png', sizes: '192x192' }],
+          },
+        ],
+      },
+      workbox: {
+        navigateFallback: '/offline.html',
+        navigateFallbackDenylist: [/^\/api\//],
+        runtimeCaching: [
+          {
+            // Firebase Auth & Firestore
+            urlPattern: /^https:\/\/(identitytoolkit|securetoken|firestore)\.googleapis\.com\//,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'firebase-cache',
+              networkTimeoutSeconds: 10,
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+            },
+          },
+          {
+            // Firebase Storage
+            urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'firebase-storage',
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 7 },
+            },
+          },
+          {
+            // Google Fonts
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts',
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+        ],
       },
     }),
   ],

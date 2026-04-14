@@ -2,6 +2,8 @@
 
 PWA interno para gerenciamento de projetos e documentação com UI premium estilo Apple.
 
+> Segurança de ambiente: `.env` é local e não deve ser versionado. Use `.env.example` como base.
+
 ## Stack
 
 - **Front**: React + Vite + TypeScript
@@ -97,6 +99,12 @@ O arquivo `public/_redirects` já configura o SPA mode.
 
 ## Variáveis de Ambiente
 
+Crie seu `.env` local a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
 | Variável | Descrição | Padrão |
 |----------|-----------|--------|
 | `VITE_USE_FIREBASE` | `true` para Firebase real, `false` para mock | `false` |
@@ -106,6 +114,8 @@ O arquivo `public/_redirects` já configura o SPA mode.
 | `VITE_FIREBASE_STORAGE_BUCKET` | Storage Bucket | — |
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Messaging Sender ID | — |
 | `VITE_FIREBASE_APP_ID` | App ID | — |
+
+Checklist manual de segurança: [docs/SECURITY.md](docs/SECURITY.md)
 
 ---
 

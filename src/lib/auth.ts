@@ -6,7 +6,9 @@ import {
   signOut as fbSignOut,
   onAuthStateChanged,
 } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth as fbAuth } from './firebase';
+import { db as fbDb } from './firebase';
 
 interface AuthState {
   user: AppUser | null;
@@ -32,6 +34,41 @@ const MOCK_USER: AppUser = {
   createdAt: new Date().toISOString(),
 };
 
+export async function ensureUserDoc(
+  uid: string,
+  email?: string | null,
+  displayName?: string | null,
+): Promise<void> {
+  if (!ENV.useFirebase || !fbDb) return;
+
+  const userRef = doc(fbDb, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) return;
+
+  const normalizedEmail = email ?? '';
+  const normalizedDisplayName = displayName ?? normalizedEmail.split('@')[0] ?? 'User';
+
+  await setDoc(userRef, {
+    email: normalizedEmail,
+    displayName: normalizedDisplayName,
+    role: 'member',
+    createdAt: serverTimestamp(),
+  });
+}
+
+/* ── Mapeamento de erros do Firebase Auth para PT-BR ── */
+export function mapFirebaseAuthError(code: string): string {
+  const map: Record<string, string> = {
+    'auth/user-not-found':         'Usuário não encontrado.',
+    'auth/wrong-password':         'Senha incorreta.',
+    'auth/invalid-credential':     'Email ou senha inválidos.',
+    'auth/too-many-requests':      'Muitas tentativas. Tente mais tarde.',
+    'auth/user-disabled':          'Conta desativada. Contate o admin.',
+    'auth/network-request-failed': 'Sem conexão. Verifique sua internet.',
+  };
+  return map[code] ?? 'Erro ao fazer login. Tente novamente.';
+}
+
 export async function login(email: string, password: string): Promise<AppUser> {
   if (!ENV.useFirebase) {
     // Mock: qualquer credencial funciona
@@ -43,17 +80,24 @@ export async function login(email: string, password: string): Promise<AppUser> {
 
   // Firebase real
   if (!fbAuth) throw new Error('Firebase Auth não inicializado');
-  const cred = await signInWithEmailAndPassword(fbAuth, email, password);
-  const appUser: AppUser = {
-    uid: cred.user.uid,
-    name: cred.user.displayName ?? email.split('@')[0],
-    email: cred.user.email ?? email,
-    role: 'member',
-    active: true,
-    createdAt: new Date().toISOString(),
-  };
-  useAuthStore.getState().setUser(appUser);
-  return appUser;
+  try {
+    const cred = await signInWithEmailAndPassword(fbAuth, email, password);
+    await ensureUserDoc(cred.user.uid, cred.user.email, cred.user.displayName);
+    const appUser: AppUser = {
+      uid: cred.user.uid,
+      name: cred.user.displayName ?? email.split('@')[0],
+      email: cred.user.email ?? email,
+      role: 'member',
+      active: true,
+      createdAt: new Date().toISOString(),
+    };
+    useAuthStore.getState().setUser(appUser);
+    return appUser;
+  } catch (err: unknown) {
+    // Traduzir o código de erro para mensagem amigável em PT-BR
+    const code = (err as { code?: string }).code ?? '';
+    throw new Error(mapFirebaseAuthError(code));
+  }
 }
 
 export async function logout(): Promise<void> {
@@ -86,19 +130,23 @@ export function initAuth(): void {
     return;
   }
 
-  onAuthStateChanged(fbAuth, (fbUser) => {
-    if (fbUser) {
-      setUser({
-        uid: fbUser.uid,
-        name: fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'User',
-        email: fbUser.email ?? '',
-        role: 'member',
-        active: true,
-        createdAt: new Date().toISOString(),
-      });
-    } else {
-      setUser(null);
+  onAuthStateChanged(fbAuth, async (fbUser) => {
+    try {
+      if (fbUser) {
+        await ensureUserDoc(fbUser.uid, fbUser.email, fbUser.displayName);
+        setUser({
+          uid: fbUser.uid,
+          name: fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'User',
+          email: fbUser.email ?? '',
+          role: 'member',
+          active: true,
+          createdAt: new Date().toISOString(),
+        });
+      } else {
+        setUser(null);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   });
 }

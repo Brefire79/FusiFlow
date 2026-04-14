@@ -18,6 +18,7 @@ const phaseLabels = {
 
 export default function ProjectHeader({ project, onEdit }: ProjectHeaderProps) {
   const navigate = useNavigate();
+  const membersCount = Object.keys(project.members ?? {}).length;
 
   return (
     <div className="mb-8">
@@ -36,6 +37,10 @@ export default function ProjectHeader({ project, onEdit }: ProjectHeaderProps) {
             <Badge status={project.status} />
           </div>
 
+          {project.description && (
+            <p className="text-sm text-text-2 mt-1 mb-3 max-w-2xl">{project.description}</p>
+          )}
+
           <div className="flex items-center gap-4 text-sm text-text-2">
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
@@ -43,7 +48,7 @@ export default function ProjectHeader({ project, onEdit }: ProjectHeaderProps) {
             </span>
             <span className="flex items-center gap-1.5">
               <Users className="h-4 w-4" />
-              {project.members.length} membro(s)
+              {membersCount} membro(s)
             </span>
             <span className="bg-accent-2/20 text-accent text-xs px-2.5 py-0.5 rounded-full">
               {phaseLabels[project.phase]}

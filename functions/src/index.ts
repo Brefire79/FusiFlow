@@ -18,9 +18,11 @@ interface ExportRequest {
  * Callable: exportProject
  * Gera exportação do projeto em JSON, PDF ou DOCX.
  * Salva no Storage e registra em Firestore.
+ *
+ * Região: southamerica-east1 (São Paulo) — menor latência para usuários no Brasil.
  */
 export const exportProject = onCall<ExportRequest>(
-  { maxInstances: 10 },
+  { maxInstances: 10, region: 'southamerica-east1' },
   async (request) => {
     // Auth check
     if (!request.auth) {
@@ -95,7 +97,7 @@ export const exportProject = onCall<ExportRequest>(
 
     // Get user name
     const userSnap = await db.doc(`users/${uid}`).get();
-    const userName = userSnap.exists ? userSnap.data()?.name || 'Usuário' : 'Usuário';
+    const userName = userSnap.exists ? userSnap.data()?.displayName || 'Usuário' : 'Usuário';
 
     const exportRecord = {
       format,

@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { login, useAuthStore } from '@/lib/auth';
+import { ENV } from '@/lib/env';
 import Button from '@/components/ui/Button';
 import AmbLogo from '@/components/layout/AmbLogo';
 import toast from 'react-hot-toast';
 
 export default function Login() {
   const user = useAuthStore((s) => s.user);
-  const [email, setEmail] = useState('admin@fusiflow.app');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -27,6 +28,19 @@ export default function Login() {
     }
   };
 
+  const handleMockAdminLogin = async () => {
+    if (ENV.useFirebase) return;
+    setLoading(true);
+    try {
+      await login('admin@fusiflow.app', 'admin123');
+      navigate('/');
+    } catch (err: any) {
+      toast.error(err.message ?? 'Erro ao fazer login mock');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 relative"
@@ -34,7 +48,7 @@ export default function Login() {
         background: `
           radial-gradient(ellipse at 50% 30%, rgba(20, 85, 150, 0.2) 0%, transparent 50%),
           radial-gradient(ellipse at 80% 80%, rgba(208, 125, 95, 0.1) 0%, transparent 50%),
-          #011938
+          var(--color-bg)
         `,
       }}
     >
@@ -103,11 +117,29 @@ export default function Login() {
             <Button variant="accent" type="submit" loading={loading} className="w-full mt-2">
               Entrar
             </Button>
+
+            {!ENV.useFirebase && (
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={handleMockAdminLogin}
+                disabled={loading}
+                className="w-full"
+              >
+                Entrar como Admin (Mock)
+              </Button>
+            )}
           </form>
 
-          <p className="text-xs text-text-2 text-center mt-6">
-            Modo mock ativo — qualquer credencial funciona
-          </p>
+          {!ENV.useFirebase ? (
+            <p className="text-xs text-text-2 text-center mt-6">
+              Modo mock ativo — qualquer credencial funciona
+            </p>
+          ) : (
+            <p className="text-xs text-text-2 text-center mt-6">
+              Use seu email e senha do Firebase Authentication
+            </p>
+          )}
         </div>
       </div>
     </div>

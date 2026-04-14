@@ -1,6 +1,8 @@
 /* ── Data Types ── */
 
 export type Role = 'admin' | 'member';
+export type ProjectMemberRole = 'admin' | 'manager' | 'member';
+export type ProjectMembersMap = Record<string, ProjectMemberRole>;
 export type ProjectStatus = 'backlog' | 'andamento' | 'revisao' | 'concluido';
 export type Phase = 'planejamento' | 'execução' | 'entrega';
 
@@ -22,10 +24,11 @@ export interface Lock {
 export interface Project {
   id: string;
   title: string;
+  description?: string;
   status: ProjectStatus;
   phase: Phase;
   tags: string[];
-  members: string[]; // uids
+  members: ProjectMembersMap;
   createdBy: string;
   createdAt: string;
   updatedBy: string;
@@ -77,4 +80,16 @@ export interface ExportRecord {
   createdAt: string;
   downloadUrl: string | null;
   filePath: string | null;
+}
+
+/* ── Notifications ── */
+export type NotificationType = 'info' | 'success' | 'warning' | 'error';
+
+export interface Notification {
+  id: string;
+  message: string;
+  type: NotificationType;
+  /** Texto relativo de tempo (ex: "há 5 min") ou ISO string */
+  at: string;
+  read: boolean;
 }

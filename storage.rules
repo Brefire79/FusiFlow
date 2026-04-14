@@ -1,0 +1,26 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Exports: somente usuários autenticados podem fazer download.
+    // Escrita bloqueada no cliente — apenas Cloud Functions (service account) pode gravar.
+    match /projects/{projectId}/exports/{fileName} {
+      allow read:  if request.auth != null;
+      allow write: if false; // apenas via Functions
+    }
+
+    // Uploads futuros de avatares e anexos de usuários.
+    // Limite de 5 MB por arquivo, somente o próprio usuário pode escrever.
+    match /users/{userId}/{allPaths=**} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Negar tudo mais por padrão (segurança pela negação explícita)
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

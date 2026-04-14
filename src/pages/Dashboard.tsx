@@ -14,47 +14,53 @@ import {
   ChevronRight,
   Search,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import ActivityChart from '@/components/dashboard/ActivityChart';
 
 const statusCards: {
   status: ProjectStatus;
   label: string;
-  subLabel: string;
   icon: typeof ClipboardList;
   accent: string;
   iconBg: string;
+  borderRgba: string;
+  glowRgba: string;
 }[] = [
   {
     status: 'backlog',
     label: 'Backlog',
-    subLabel: 'Backlog',
     icon: ClipboardList,
-    accent: '#938586',
-    iconBg: 'rgba(147,133,134,0.15)',
+    accent: '#C4AEB0',
+    iconBg: 'rgba(196,174,176,0.15)',
+    borderRgba: 'rgba(196,174,176,0.3)',
+    glowRgba: 'rgba(196,174,176,0.06)',
   },
   {
     status: 'andamento',
     label: 'Em Andamento',
-    subLabel: 'Em Andamento',
     icon: GearIcon,
     accent: '#2ABEDD',
     iconBg: 'rgba(42,190,221,0.15)',
+    borderRgba: 'rgba(42,190,221,0.4)',
+    glowRgba: 'rgba(42,190,221,0.09)',
   },
   {
     status: 'revisao',
     label: 'Em Revisão',
-    subLabel: 'Em Revisão',
     icon: CheckCircle2,
-    accent: '#facc15',
-    iconBg: 'rgba(250,204,21,0.15)',
+    accent: '#F4C430',
+    iconBg: 'rgba(244,196,48,0.15)',
+    borderRgba: 'rgba(244,196,48,0.35)',
+    glowRgba: 'rgba(244,196,48,0.07)',
   },
   {
     status: 'concluido',
     label: 'Concluídos',
-    subLabel: 'Concluídos',
     icon: CheckCheck,
     accent: '#34d399',
     iconBg: 'rgba(52,211,153,0.15)',
+    borderRgba: 'rgba(52,211,153,0.35)',
+    glowRgba: 'rgba(52,211,153,0.07)',
   },
 ];
 
@@ -73,17 +79,24 @@ export default function Dashboard() {
     count: projects.filter((p) => p.status === sc.status).length,
   }));
 
-  const recent = [...projects]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-    .slice(0, 6);
+  const RECENT_PAGE_SIZE = 6;
+  const [recentPage, setRecentPage] = useState(1);
 
-  const filtered = search
-    ? recent.filter(
+  useEffect(() => { setRecentPage(1); }, [search]);
+
+  const sortedRecent = [...projects]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+  const allFiltered = search
+    ? sortedRecent.filter(
         (p) =>
           p.title.toLowerCase().includes(search.toLowerCase()) ||
           p.tags.some((t) => t.toLowerCase().includes(search.toLowerCase())),
       )
-    : recent;
+    : sortedRecent;
+
+  const filtered = allFiltered.slice(0, recentPage * RECENT_PAGE_SIZE);
+  const hasMoreRecent = filtered.length < allFiltered.length;
 
   if (isLoading) return <Spinner />;
 
@@ -109,44 +122,58 @@ export default function Dashboard() {
               style={{
                 backgroundColor: 'rgba(3, 45, 78, 0.5)',
                 backdropFilter: 'blur(12px)',
-                borderColor: isHighlight
-                  ? 'rgba(42, 190, 221, 0.4)'
-                  : 'rgba(68, 62, 68, 0.4)',
-                boxShadow: isHighlight
-                  ? '0 0 30px rgba(42, 190, 221, 0.1), inset 0 1px 0 rgba(42,190,221,0.1)'
-                  : '0 10px 30px rgba(0,0,0,0.25)',
+                borderColor: c.borderRgba,
+                boxShadow: `0 8px 24px rgba(0,0,0,0.3), inset 0 1px 0 ${c.glowRgba}`,
               }}
-              onClick={() => navigate('/projects')}
+              onClick={() => navigate(`/projects?status=${c.status}`)}
             >
+              {/* Accent top stripe */}
+              <div
+                className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl"
+                style={{ backgroundColor: c.accent, opacity: 0.7 }}
+              />
+
               {/* Icon + label */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2.5 mb-4">
                 <div
-                  className="h-8 w-8 rounded-lg flex items-center justify-center"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
                   style={{ backgroundColor: c.iconBg }}
                 >
                   <c.icon className="h-4 w-4" style={{ color: c.accent }} />
                 </div>
-                <span className="text-sm font-medium" style={{ color: c.accent }}>
+                <span className="text-sm font-semibold text-text leading-tight">
                   {c.label}
                 </span>
               </div>
 
-              {/* Big number */}
-              <p className="text-4xl font-bold text-text mb-1">{c.count}</p>
-              <p className="text-xs text-text-2">{c.subLabel}</p>
+              {/* Big number — usa accent para dar identidade visual */}
+              <p
+                className="text-4xl font-bold mb-1 tabular-nums"
+                style={{ color: c.accent }}
+              >
+                {c.count}
+              </p>
+              <p className="text-xs text-text-2">
+                {c.count === 1 ? 'projeto' : 'projetos'}
+              </p>
 
-              {/* Subtle glow for active card */}
-              {isHighlight && (
-                <div
-                  className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-20"
-                  style={{
-                    background: 'radial-gradient(circle, rgba(42,190,221,0.6), transparent 70%)',
-                  }}
-                />
-              )}
+              {/* Glow radial no canto — para todos os cards */}
+              <div
+                className="absolute -top-8 -right-8 w-28 h-28 rounded-full pointer-events-none"
+                style={{
+                  background: `radial-gradient(circle, ${c.accent}33, transparent 70%)`,
+                  opacity: isHighlight ? 0.5 : 0.25,
+                }}
+              />
             </div>
           );
         })}
+      </div>
+
+      {/* Atividade semanal */}
+      <div className="rounded-2xl border border-border/40 bg-surface/40 backdrop-blur-sm p-5">
+        <h2 className="text-base font-semibold text-text mb-4">Atividade dos últimos 7 dias</h2>
+        <ActivityChart />
       </div>
 
       {/* Projetos Recentes header */}
@@ -186,6 +213,17 @@ export default function Dashboard() {
           <ProjectCard key={p.id} project={p} />
         ))}
       </div>
+      {hasMoreRecent && (
+        <div className="flex justify-center pt-2">
+          <button
+            onClick={() => setRecentPage(p => p + 1)}
+            className="rounded-full px-5 h-10 text-sm font-medium text-accent border border-accent/30
+                       hover:bg-accent/5 transition-all duration-200"
+          >
+            Carregar mais ({allFiltered.length - filtered.length} restantes)
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import type { Doc } from '@/lib/data/types';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Spinner from '@/components/ui/Spinner';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import DocEditor from './DocEditor';
 import { Plus, FileText, Trash2 } from 'lucide-react';
 import { timeAgo } from '@/lib/time';
@@ -17,6 +18,8 @@ interface DocsPanelProps {
 export default function DocsPanel({ projectId }: DocsPanelProps) {
   const qc = useQueryClient();
   const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
+  // ID do documento aguardando confirmação de exclusão
+  const [docToDelete, setDocToDelete] = useState<string | null>(null);
 
   const { data: docs = [], isLoading } = useQuery({
     queryKey: ['docs', projectId],
@@ -101,7 +104,7 @@ export default function DocsPanel({ projectId }: DocsPanelProps) {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (confirm('Remover documento?')) deleteMut.mutate(doc.id);
+                  setDocToDelete(doc.id);
                 }}
                 className="opacity-0 group-hover:opacity-100 transition-opacity
                            rounded-full p-1.5 hover:bg-red-500/10"
@@ -112,6 +115,15 @@ export default function DocsPanel({ projectId }: DocsPanelProps) {
           ))}
         </div>
       )}
+      <ConfirmModal
+        open={docToDelete !== null}
+        onClose={() => setDocToDelete(null)}
+        onConfirm={() => docToDelete && deleteMut.mutate(docToDelete)}
+        title="Remover documento"
+        description="Tem certeza? Esta ação não pode ser desfeita."
+        confirmLabel="Remover"
+        confirmVariant="danger"
+      />
     </div>
   );
 }

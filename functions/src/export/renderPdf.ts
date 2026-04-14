@@ -28,11 +28,14 @@ export function renderPdf(bundle: ProjectBundle): Promise<Buffer> {
 
     // Project info
     const p = bundle.project;
+    const membersCount = Array.isArray(p.members)
+      ? p.members.length
+      : Object.keys(p.members ?? {}).length;
     doc.fontSize(18).fillColor('#D4CCC0').text(p.title || 'Projeto').moveDown(0.5);
     doc.fontSize(10).fillColor('#938586');
     doc.text(`Status: ${p.status}  |  Fase: ${p.phase}  |  Versão: ${p.version}`);
     doc.text(`Tags: ${(p.tags || []).join(', ')}`);
-    doc.text(`Membros: ${(p.members || []).length}`);
+    doc.text(`Membros: ${membersCount}`);
     doc.moveDown(1);
 
     // Docs

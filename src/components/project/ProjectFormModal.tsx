@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -6,6 +6,7 @@ import type { ProjectStatus, Phase } from '@/lib/data/types';
 
 interface FormData {
   title: string;
+  description: string;
   status: ProjectStatus;
   phase: Phase;
   tags: string;
@@ -14,8 +15,20 @@ interface FormData {
 interface ProjectFormModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: { title: string; status: ProjectStatus; phase: Phase; tags: string[] }) => Promise<void>;
-  initial?: { title: string; status: ProjectStatus; phase: Phase; tags: string[] };
+  onSubmit: (data: {
+    title: string;
+    description: string;
+    status: ProjectStatus;
+    phase: Phase;
+    tags: string[];
+  }) => Promise<void>;
+  initial?: {
+    title: string;
+    description?: string;
+    status: ProjectStatus;
+    phase: Phase;
+    tags: string[];
+  };
   mode: 'create' | 'edit';
 }
 
@@ -32,6 +45,16 @@ const phases: { value: Phase; label: string }[] = [
   { value: 'entrega', label: 'Entrega' },
 ];
 
+function makeForm(initial?: ProjectFormModalProps['initial']): FormData {
+  return {
+    title: initial?.title ?? '',
+    description: initial?.description ?? '',
+    status: initial?.status ?? 'backlog',
+    phase: initial?.phase ?? 'planejamento',
+    tags: initial?.tags?.join(', ') ?? '',
+  };
+}
+
 export default function ProjectFormModal({
   open,
   onClose,
@@ -39,13 +62,12 @@ export default function ProjectFormModal({
   initial,
   mode,
 }: ProjectFormModalProps) {
-  const [form, setForm] = useState<FormData>({
-    title: initial?.title ?? '',
-    status: initial?.status ?? 'backlog',
-    phase: initial?.phase ?? 'planejamento',
-    tags: initial?.tags?.join(', ') ?? '',
-  });
+  const [form, setForm] = useState<FormData>(() => makeForm(initial));
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) setForm(makeForm(initial));
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +76,7 @@ export default function ProjectFormModal({
     try {
       await onSubmit({
         title: form.title.trim(),
+        description: form.description.trim(),
         status: form.status,
         phase: form.phase,
         tags: form.tags
@@ -74,9 +97,26 @@ export default function ProjectFormModal({
           label="Título"
           placeholder="Nome do projeto"
           value={form.title}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, title: e.target.value }))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm((f) => ({ ...f, title: e.target.value }))
+          }
           autoFocus
         />
+
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-text-2 uppercase tracking-wider">
+            Descrição
+          </label>
+          <textarea
+            placeholder="Objetivo e escopo do projeto..."
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            rows={3}
+            className="w-full rounded-2xl border border-border/60 bg-bg-2/80 px-4 py-3
+                       text-sm text-text placeholder:text-text-2 resize-none
+                       focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all"
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
@@ -118,7 +158,9 @@ export default function ProjectFormModal({
           label="Tags (separar por vírgula)"
           placeholder="frontend, design, api"
           value={form.tags}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, tags: e.target.value }))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm((f) => ({ ...f, tags: e.target.value }))
+          }
         />
 
         <div className="flex justify-end gap-3 pt-2">

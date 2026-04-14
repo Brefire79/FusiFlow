@@ -2,60 +2,128 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Helpers ──
-    function isAuth() {
+    function signedIn() {
       return request.auth != null;
     }
-    function uid() {
-      return request.auth.uid;
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
     }
-    // Admin check: relies on custom claim or user doc role field.
-    // For MVP, allow authorized users broadly; tighten after Functions migration.
+
+    function userRole() {
+      return signedIn() && userDoc(request.auth.uid).exists
+        ? userDoc(request.auth.uid).data.role
+        : null;
+    }
+
+    function isAdmin() {
+      return signedIn() && userRole() == "admin";
+    }
+
+    function projectDoc(projectId) {
+      return get(/databases/$(database)/documents/projects/$(projectId));
+    }
+
+    function projectExists(projectId) {
+      return projectDoc(projectId).exists;
+    }
+
     function isProjectMember(projectId) {
-      return isAuth() && (
-        uid() in get(/databases/$(database)/documents/projects/$(projectId)).data.members
-      );
+      return signedIn()
+        && projectExists(projectId)
+        && projectDoc(projectId).data.members[request.auth.uid] != null;
     }
 
-    // ── Users ──
-    match /users/{userId} {
-      allow read: if isAuth();
-      allow write: if isAuth() && uid() == userId;
+    function memberRole(projectId) {
+      return isProjectMember(projectId)
+        ? projectDoc(projectId).data.members[request.auth.uid]
+        : null;
     }
 
-    // ── Projects ──
+    function canManageProject(projectId) {
+      return isAdmin()
+        || (isProjectMember(projectId) && (memberRole(projectId) in ["admin", "manager"]));
+    }
+
+    // Valida os 4 status permitidos para um projeto
+    function isValidStatus(data) {
+      return data.status in ["backlog", "andamento", "revisao", "concluido"];
+    }
+
+    // Valida campos obrigatórios ao criar um projeto
+    function hasRequiredProjectFields(data) {
+      return data.keys().hasAll([
+        'title', 'status', 'phase', 'tags', 'members',
+        'createdBy', 'createdAt', 'updatedBy', 'updatedAt', 'version'
+      ]);
+    }
+
+    // Valida campos obrigatórios ao criar um documento
+    function hasRequiredDocFields(data) {
+      return data.keys().hasAll(['title', 'content', 'projectId', 'version']);
+    }
+
+    match /users/{uid} {
+      allow create: if signedIn() && request.auth.uid == uid;
+
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+
+      allow update: if isAdmin()
+        || (signedIn()
+            && request.auth.uid == uid
+            && !( "role" in request.resource.data.diff(resource.data).changedKeys() )
+          );
+
+      allow delete: if isAdmin();
+    }
+
     match /projects/{projectId} {
-      allow read: if isAuth();
-      allow create: if isAuth();
-      allow update, delete: if isAuth() && (
-        uid() in resource.data.members
-      );
+      // Criação: validar campos obrigatórios, status válido e membro criador
+      allow create: if signedIn()
+        && hasRequiredProjectFields(request.resource.data)
+        && isValidStatus(request.resource.data)
+        && request.resource.data.members[request.auth.uid] == "admin"
+        && request.resource.data.createdBy == request.auth.uid;
 
-      // ── Docs ──
+      allow read: if isProjectMember(projectId);
+
+      // Atualização: não permite alterar createdBy nem createdAt
+      allow update: if canManageProject(projectId)
+        && isValidStatus(request.resource.data)
+        && !( "createdBy" in request.resource.data.diff(resource.data).changedKeys() )
+        && !( "createdAt" in request.resource.data.diff(resource.data).changedKeys() );
+
+      allow delete: if isAdmin();
+
       match /docs/{docId} {
-        allow read: if isAuth();
-        allow create: if isAuth();
-        allow update, delete: if isAuth();
-        // MVP: member check relaxed. Tighten:
-        // allow update, delete: if isProjectMember(projectId);
+        // Criação: validar campos obrigatórios do documento
+        allow read: if isProjectMember(projectId);
+        allow create: if isProjectMember(projectId)
+          && hasRequiredDocFields(request.resource.data)
+          && request.resource.data.projectId == projectId;
+        allow update: if isProjectMember(projectId);
+        allow delete: if canManageProject(projectId);
       }
 
-      // ── History ──
-      // MVP: client writes history. Move to Cloud Functions for production.
-      match /history/{eventId} {
-        allow read: if isAuth();
-        allow create: if isAuth();
-        // Deny update/delete from client  
-        allow update, delete: if false;
+      // Histórico: imutável após criação (apenas admins podem deletar em emergência)
+      match /history/{entryId} {
+        allow read:   if isProjectMember(projectId);
+        allow create: if isProjectMember(projectId);
+        allow update: if false;  // histórico nunca é editado
+        allow delete: if isAdmin();
       }
 
-      // ── Exports ──
-      // MVP: client can create export records. Move to Cloud Functions for production.
       match /exports/{exportId} {
-        allow read: if isAuth();
-        allow create: if isAuth();
-        allow update, delete: if false;
+        allow read: if isProjectMember(projectId);
+        allow create: if isProjectMember(projectId);
+        allow update, delete: if isAdmin();
       }
+
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
+
