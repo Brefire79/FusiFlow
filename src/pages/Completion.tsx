@@ -47,7 +47,7 @@ const SECTIONS: Section[] = [
     id: 'postdeploy',
     title: 'Pós-deploy',
     items: [
-      { id: 'login-real',  label: 'Testar login com conta Firebase real',       desc: 'Verificar email/senha no console' },
+      { id: 'login-real',  label: 'Testar login com conta Firebase real',       desc: 'Verificar email/senha no console',            fixed: true },
       { id: 'clear-data',  label: 'Limpar dados de teste',                      desc: 'Settings → Zona de Perigo → Limpar dados' },
       { id: 'real-projs',  label: 'Cadastrar projetos reais da AMB FUSI AÍ',    desc: 'Projetos + documentos definitivos' },
       { id: 'pwa-mobile',  label: 'Testar PWA instalável no celular',           desc: 'Chrome/Safari → Adicionar à tela inicial' },
