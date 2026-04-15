@@ -5,6 +5,8 @@ import Spinner from '@/components/ui/Spinner';
 import Login from '@/pages/Login';
 import NotFound from '@/pages/NotFound';
 
+const Register = lazy(() => import('@/pages/Register'));
+
 const Dashboard    = lazy(() => import('@/pages/Dashboard'));
 const Projects     = lazy(() => import('@/pages/Projects'));
 const ProjectDetail = lazy(() => import('@/pages/ProjectDetail'));
@@ -24,6 +26,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Login />,
+  },
+  {
+    path: '/register',
+    element: <S><Register /></S>,
   },
   {
     // Rota pública standalone — sem auth guard

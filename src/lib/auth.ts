@@ -3,6 +3,8 @@ import type { AppUser } from './data/types';
 import { ENV } from './env';
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   signOut as fbSignOut,
   onAuthStateChanged,
 } from 'firebase/auth';
@@ -103,6 +105,46 @@ export async function login(email: string, password: string): Promise<AppUser> {
     // Traduzir o código de erro para mensagem amigável em PT-BR
     const code = (err as { code?: string }).code ?? '';
     throw new Error(mapFirebaseAuthError(code));
+  }
+}
+
+export async function register(name: string, email: string, password: string): Promise<AppUser> {
+  if (!ENV.useFirebase) {
+    // Mock: cria usuário no localStorage e loga
+    const uid = `user-${Date.now()}`;
+    const u: AppUser = { uid, name, email, role: 'member', active: true, createdAt: new Date().toISOString() };
+    useAuthStore.getState().setUser(u);
+    localStorage.setItem('ff_user', JSON.stringify(u));
+    // Salva na lista de usuários do mock
+    const existing = JSON.parse(localStorage.getItem('ff_known_users') ?? '[]') as { uid: string; name: string; email: string }[];
+    existing.push({ uid, name, email });
+    localStorage.setItem('ff_known_users', JSON.stringify(existing));
+    return u;
+  }
+
+  if (!fbAuth) throw new Error('Firebase Auth não inicializado');
+  try {
+    const cred = await createUserWithEmailAndPassword(fbAuth, email, password);
+    await updateProfile(cred.user, { displayName: name });
+    await ensureUserDoc(cred.user.uid, email, name);
+    const appUser: AppUser = {
+      uid: cred.user.uid,
+      name,
+      email,
+      role: 'member',
+      active: true,
+      createdAt: new Date().toISOString(),
+    };
+    useAuthStore.getState().setUser(appUser);
+    return appUser;
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code ?? '';
+    const map: Record<string, string> = {
+      'auth/email-already-in-use': 'Este email já está cadastrado.',
+      'auth/weak-password': 'Senha muito fraca. Use ao menos 6 caracteres.',
+      'auth/invalid-email': 'Email inválido.',
+    };
+    throw new Error(map[code] ?? 'Erro ao criar conta. Tente novamente.');
   }
 }
 

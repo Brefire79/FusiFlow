@@ -1,45 +1,44 @@
 import { useState } from 'react';
 import { useNavigate, Navigate, Link } from 'react-router-dom';
-import { login, useAuthStore } from '@/lib/auth';
+import { register, useAuthStore } from '@/lib/auth';
 import { ENV } from '@/lib/env';
 import Button from '@/components/ui/Button';
 import AmbLogo from '@/components/layout/AmbLogo';
 import toast from 'react-hot-toast';
 
-export default function Login() {
+export default function Register() {
   const user = useAuthStore((s) => s.user);
-  const [email, setEmail] = useState('');
+  const [name, setName]         = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [confirm, setConfirm]   = useState('');
+  const [loading, setLoading]   = useState(false);
   const navigate = useNavigate();
 
   if (user) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) { toast.error('Informe seu nome.'); return; }
+    if (password.length < 6) { toast.error('Senha deve ter ao menos 6 caracteres.'); return; }
+    if (password !== confirm) { toast.error('As senhas não conferem.'); return; }
+
     setLoading(true);
     try {
-      await login(email, password);
+      await register(name.trim(), email, password);
+      toast.success('Conta criada com sucesso!');
       navigate('/');
-    } catch (err: any) {
-      toast.error(err.message ?? 'Erro ao fazer login');
+    } catch (err: unknown) {
+      toast.error((err as Error).message ?? 'Erro ao criar conta');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMockAdminLogin = async () => {
-    if (ENV.useFirebase) return;
-    setLoading(true);
-    try {
-      await login('admin@fusiflow.app', 'admin123');
-      navigate('/');
-    } catch (err: any) {
-      toast.error(err.message ?? 'Erro ao fazer login mock');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const inputCls =
+    'w-full rounded-2xl border border-border/60 bg-bg-2/80 px-4 h-11 ' +
+    'text-base text-text placeholder:text-text-2 ' +
+    'focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all';
 
   return (
     <div
@@ -79,10 +78,27 @@ export default function Login() {
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <AmbLogo size={100} />
-            <p className="text-sm text-text-2 mt-4">Gestão de Projetos AMB FUSI AÍ</p>
+            <p className="text-sm text-text-2 mt-4">Criar nova conta</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nome */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-text-2 uppercase tracking-wider">
+                Nome completo
+              </label>
+              <input
+                type="text"
+                placeholder="Seu nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoFocus
+                required
+                className={inputCls}
+              />
+            </div>
+
+            {/* Email */}
             <div className="space-y-1.5">
               <label className="block text-xs font-medium text-text-2 uppercase tracking-wider">
                 Email
@@ -92,55 +108,56 @@ export default function Login() {
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoFocus
-                className="w-full rounded-2xl border border-border/60 bg-bg-2/80 px-4 h-11
-                           text-sm text-text placeholder:text-text-2
-                           focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all"
+                required
+                className={inputCls}
               />
             </div>
 
+            {/* Senha */}
             <div className="space-y-1.5">
               <label className="block text-xs font-medium text-text-2 uppercase tracking-wider">
                 Senha
               </label>
               <input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Mín. 6 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-2xl border border-border/60 bg-bg-2/80 px-4 h-11
-                           text-sm text-text placeholder:text-text-2
-                           focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all"
+                required
+                className={inputCls}
+              />
+            </div>
+
+            {/* Confirmar senha */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-text-2 uppercase tracking-wider">
+                Confirmar senha
+              </label>
+              <input
+                type="password"
+                placeholder="Repita a senha"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                className={inputCls}
               />
             </div>
 
             <Button variant="accent" type="submit" loading={loading} className="w-full mt-2">
-              Entrar
+              Criar conta
             </Button>
-
-            {!ENV.useFirebase && (
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={handleMockAdminLogin}
-                disabled={loading}
-                className="w-full"
-              >
-                Entrar como Admin (Mock)
-              </Button>
-            )}
           </form>
 
-          {!ENV.useFirebase ? (
-            <p className="text-xs text-text-2 text-center mt-6">
-              Modo mock ativo — qualquer credencial funciona
-            </p>
-          ) : (
-            <p className="text-sm text-text-2 text-center mt-6">
-              Não tem conta?{' '}
-              <Link to="/register" className="text-accent hover:underline font-medium">
-                Criar conta
-              </Link>
+          <p className="text-sm text-text-2 text-center mt-6">
+            Já tem conta?{' '}
+            <Link to="/login" className="text-accent hover:underline font-medium">
+              Entrar
+            </Link>
+          </p>
+
+          {!ENV.useFirebase && (
+            <p className="text-xs text-text-2/60 text-center mt-3">
+              Modo mock — conta salva localmente
             </p>
           )}
         </div>

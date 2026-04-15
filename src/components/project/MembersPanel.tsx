@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '@/lib/data/api';
 import { useAuthStore } from '@/lib/auth';
 import type { Project, ProjectMemberRole, ProjectMembersMap } from '@/lib/data/types';
-import { resolveUserName } from '@/lib/users';
+import { listUsers, resolveUserName } from '@/lib/users';
 import Button from '@/components/ui/Button';
 import { UserPlus, Trash2, Crown, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -30,16 +30,6 @@ const roleTextColors: Record<ProjectMemberRole, string> = {
   member: '#938586',
 };
 
-/* Known users available to add (mock) */
-const KNOWN_USERS = [
-  { uid: 'joao', name: 'João Albuquerque' },
-  { uid: 'lucas', name: 'Lucas Silva' },
-  { uid: 'breno-m', name: 'Breno Marques' },
-  { uid: 'ana', name: 'Ana Costa' },
-  { uid: 'rafael', name: 'Rafael Mendes' },
-  { uid: 'admin', name: 'Breno (Admin)' },
-];
-
 export default function MembersPanel({ project }: MembersPanelProps) {
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
@@ -48,7 +38,13 @@ export default function MembersPanel({ project }: MembersPanelProps) {
   const [newRole, setNewRole] = useState<ProjectMemberRole>('member');
 
   const currentUids = Object.keys(project.members ?? {});
-  const available = KNOWN_USERS.filter((u) => !currentUids.includes(u.uid));
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: listUsers,
+    staleTime: 60_000,
+  });
+  const available = allUsers.filter((u) => !currentUids.includes(u.uid));
 
   const canManage =
     user?.role === 'admin' ||
@@ -119,7 +115,7 @@ export default function MembersPanel({ project }: MembersPanelProps) {
         >
           <p className="text-sm font-medium text-text">Novo membro</p>
           <div className="flex gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[180px]">
+            <div className="relative flex-1 min-w-45">
               <select
                 value={newUid}
                 onChange={(e) => setNewUid(e.target.value)}
