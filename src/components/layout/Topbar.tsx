@@ -1,9 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Search, Bell, Plus, LayoutDashboard, FolderKanban, Settings, Menu, Sun, Moon } from 'lucide-react';
+import { Search, Bell, Plus, LayoutDashboard, FolderKanban, Settings, Menu } from 'lucide-react';
 import AmbLogo from './AmbLogo';
 import { useState } from 'react';
 import { useNotificationsStore } from '@/lib/notificationsStore';
-import { useThemeStore } from '@/lib/theme';
 import SearchOverlay from './SearchOverlay';
 
 const tabs = [
@@ -27,7 +26,6 @@ export default function Topbar({ onNewProject, onToggleSidebar, searchOpen = fal
   const [notifOpen, setNotifOpen] = useState(false);
 
   const { notifications, markAllRead } = useNotificationsStore();
-  const { mode, toggleMode } = useThemeStore();
   const latestFive = notifications.slice(0, 5);
   const hasUnread = notifications.some((n) => !n.read);
 
@@ -85,19 +83,6 @@ export default function Topbar({ onNewProject, onToggleSidebar, searchOpen = fal
 
       {/* Right actions */}
       <div className="flex items-center gap-3">
-        {/* Theme toggle */}
-        <button
-          onClick={toggleMode}
-          title={mode === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-          aria-label="Alternar tema"
-          className="rounded-full p-2.5 border border-border/40 bg-surface/40
-                     hover:bg-white/5 transition-colors text-text-2 hover:text-text"
-        >
-          {mode === 'dark'
-            ? <Sun className="h-4 w-4" />
-            : <Moon className="h-4 w-4" />}
-        </button>
-
         {/* Notification bell com dropdown */}
         <div className="relative">
           <button
