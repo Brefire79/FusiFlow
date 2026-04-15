@@ -28,6 +28,7 @@ dist-ssr
 
 # Firebase service account (NUNCA versionar!)
 scripts/serviceAccountKey.json
+.firebaserc
 
 # Documentação sensível
 docs/SECURITY.md
