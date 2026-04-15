@@ -177,7 +177,7 @@ export default function Topbar({ onNewProject, onToggleSidebar, searchOpen = fal
           }}
         >
           <Plus className="h-4 w-4" />
-          Novo Projeto
+          <span className="hidden sm:inline">Novo Projeto</span>
         </button>
       </div>
 

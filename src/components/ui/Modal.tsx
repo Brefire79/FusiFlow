@@ -30,7 +30,7 @@ export default function Modal({ open, onClose, title, children, maxW = 'max-w-lg
       />
       {/* Panel */}
       <div
-        className={`relative w-full ${maxW} rounded-3xl border border-border/60 bg-surface/80 backdrop-blur-xl shadow-card p-6`}
+        className={`relative w-full ${maxW} rounded-3xl border border-border/60 bg-surface/80 backdrop-blur-xl shadow-card p-6 max-h-[90vh] overflow-y-auto`}
         style={{ animation: 'fadeInUp 200ms ease-out' }}
       >
         <div className="flex items-center justify-between mb-5">

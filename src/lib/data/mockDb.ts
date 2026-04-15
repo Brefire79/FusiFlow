@@ -190,6 +190,10 @@ export function saveProject(p: Project): void {
 
 export function deleteProject(id: string): void {
   setAll(KEYS.projects, getProjects().filter((p) => p.id !== id));
+  // Limpar subcoleções órfãs (docs, history, exports)
+  setAll(KEYS.docs, getAll<Doc>(KEYS.docs).filter((d) => d.projectId !== id));
+  setAll(KEYS.history, getAll<HistoryEvent>(KEYS.history).filter((h) => h.projectId !== id));
+  setAll(KEYS.exports, getAll<ExportRecord>(KEYS.exports).filter((e) => e.projectId !== id));
 }
 
 // Docs

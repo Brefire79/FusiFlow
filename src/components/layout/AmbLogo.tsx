@@ -86,7 +86,7 @@ export default function AmbLogo({ size = 80 }: { size?: number }) {
           AMB FUSI
         </p>
         <p className="text-[9px] uppercase tracking-[0.2em]" style={{ color: '#938586' }}>
-          Entretenimento Digital
+          Damos Vida à Inovação
         </p>
       </div>
     </div>

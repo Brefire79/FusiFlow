@@ -184,7 +184,15 @@ export async function removeProject(id: string): Promise<void> {
     mock.deleteProject(id);
     return;
   }
-  const { db, doc, deleteDoc } = await fbImports();
+  // Firestore NÃO deleta subcoleções automaticamente — deletar manualmente
+  const { db, doc, deleteDoc, collection, getDocs } = await fbImports();
+  const subcollections = ['docs', 'history', 'exports'];
+  await Promise.all(
+    subcollections.map(async (sub) => {
+      const snap = await getDocs(collection(db, 'projects', id, sub));
+      await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+    }),
+  );
   await deleteDoc(doc(db, 'projects', id));
 }
 

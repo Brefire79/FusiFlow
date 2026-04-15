@@ -14,7 +14,8 @@ interface TabsProps {
 
 export default function Tabs({ tabs, active, onChange }: TabsProps) {
   return (
-    <div className="flex gap-1 rounded-full bg-bg-2/60 p-1 border border-border/30">
+    <div className="flex gap-1 rounded-full bg-bg-2/60 p-1 border border-border/30 overflow-x-auto">
+      <div className="flex gap-1 min-w-max">
       {tabs.map((t) => (
         <button
           key={t.key}
@@ -31,6 +32,7 @@ export default function Tabs({ tabs, active, onChange }: TabsProps) {
           {t.label}
         </button>
       ))}
+      </div>
     </div>
   );
 }

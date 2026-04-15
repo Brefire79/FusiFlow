@@ -134,11 +134,20 @@ export function initAuth(): void {
     try {
       if (fbUser) {
         await ensureUserDoc(fbUser.uid, fbUser.email, fbUser.displayName);
+        // Ler role real do Firestore
+        let role: 'admin' | 'member' = 'member';
+        if (fbDb) {
+          const userSnap = await getDoc(doc(fbDb, 'users', fbUser.uid));
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            if (data.role === 'admin') role = 'admin';
+          }
+        }
         setUser({
           uid: fbUser.uid,
           name: fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'User',
           email: fbUser.email ?? '',
-          role: 'member',
+          role,
           active: true,
           createdAt: new Date().toISOString(),
         });

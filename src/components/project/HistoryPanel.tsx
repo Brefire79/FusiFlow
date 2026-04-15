@@ -46,7 +46,7 @@ export default function HistoryPanel({ projectId }: HistoryPanelProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
       {events.map((ev) => {
         const Icon = iconMap[ev.type] ?? History;
         return (

@@ -39,6 +39,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -97,10 +98,25 @@ select option { background-color: #081228; color: #D4CCC0; }
 }
 
 /* ── Light mode overrides ── */
+[data-theme="light"] {
+  --color-bg: #F0F4F8;
+  --color-bg-2: #E2E8F0;
+  --color-surface: #FFFFFF;
+  --color-text: #1A202C;
+  --color-text-2: #4A5568;
+  --color-border: #CBD5E0;
+  --color-primary: #D07D5F;
+  --color-primary-hover: #DF8C69;
+  --color-primary-soft: #E5B799;
+  --color-accent: #1a8fa8;
+  --color-accent-2: #0f6b7e;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
 [data-theme="light"] select { background-color: var(--color-bg-2); color: var(--color-text); }
-[data-theme="light"] select option { background-color: #E5E0D8; color: #1A1614; }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: #C4BDB6; }
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #6B5E5E; }
+[data-theme="light"] select option { background-color: #E2E8F0; color: #1A202C; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: #CBD5E0; }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #4A5568; }
 
 /* ── Animações globais ── */
 @keyframes fadeInUp {

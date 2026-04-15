@@ -83,6 +83,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               <button
                 onClick={handleLogout}
                 className="rounded-full p-1.5 hover:bg-white/10 transition-colors"
+                aria-label="Sair da conta"
                 title="Sair"
               >
                 <LogOut className="h-4 w-4 text-text-2" />

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import type { Doc } from '@/lib/data/types';
 import { docsApi, locksApi } from '@/lib/data/api';
 import Button from '@/components/ui/Button';
@@ -175,7 +176,7 @@ export default function DocEditor({ projectId, doc, onBack }: DocEditorProps) {
 
       {preview ? (
         <div className="rounded-3xl border border-border/50 bg-surface/60 backdrop-blur-md shadow-card p-6 prose-fusi min-h-100">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{content}</ReactMarkdown>
         </div>
       ) : (
         <textarea

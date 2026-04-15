@@ -10,6 +10,7 @@ import { projectsApi } from '@/lib/data/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import ConnectionStatus from '@/components/ui/ConnectionStatus';
+import UpdatePrompt from '@/components/ui/UpdatePrompt';
 
 export default function AppShell() {
   const { user, loading } = useAuthStore();
@@ -143,6 +144,8 @@ export default function AppShell() {
 
       {/* Banner de status de conexão (Firebase only) */}
       <ConnectionStatus />
+      {/* PWA update prompt */}
+      <UpdatePrompt />
     </div>
   );
 }

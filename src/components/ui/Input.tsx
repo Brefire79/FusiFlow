@@ -5,7 +5,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const inputClass =
-  'w-full rounded-2xl border border-border/60 bg-bg-2/80 px-4 h-11 text-sm text-text placeholder:text-text-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 transition-all duration-150';
+  'w-full rounded-2xl border border-border/60 bg-bg-2/80 px-4 h-11 text-base text-text placeholder:text-text-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent/50 transition-all duration-150';
 
 export default function Input({ label, className = '', ...rest }: InputProps) {
   return (

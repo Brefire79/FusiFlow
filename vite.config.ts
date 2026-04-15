@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: 'FusiFlow — Gestão de Projetos AMB FUSI AÍ',
@@ -45,9 +45,17 @@ export default defineConfig({
           },
         ],
       },
+      // Desativa service worker em dev — evita erros de manifest e FetchEvent
+      devOptions: {
+        enabled: false,
+      },
       workbox: {
         navigateFallback: '/offline.html',
         navigateFallbackDenylist: [/^\/api\//],
+        // offline.html precisa estar no precache para o navigateFallback funcionar
+        additionalManifestEntries: [
+          { url: '/offline.html', revision: null },
+        ],
         runtimeCaching: [
           {
             // Firebase Auth & Firestore
@@ -84,6 +92,18 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'firebase':     ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage', 'firebase/functions'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui':           ['lucide-react', 'react-hot-toast'],
+          'query':        ['@tanstack/react-query'],
+        },
+      },
     },
   },
   server: {

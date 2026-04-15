@@ -101,7 +101,9 @@ service cloud.firestore {
         allow create: if isProjectMember(projectId)
           && hasRequiredDocFields(request.resource.data)
           && request.resource.data.projectId == projectId;
-        allow update: if isProjectMember(projectId);
+        // Atualização: não permite alterar o projectId
+        allow update: if isProjectMember(projectId)
+          && !( "projectId" in request.resource.data.diff(resource.data).changedKeys() );
         allow delete: if canManageProject(projectId);
       }
 
