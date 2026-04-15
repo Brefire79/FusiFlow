@@ -83,11 +83,17 @@ export async function login(email: string, password: string): Promise<AppUser> {
   try {
     const cred = await signInWithEmailAndPassword(fbAuth, email, password);
     await ensureUserDoc(cred.user.uid, cred.user.email, cred.user.displayName);
+    // Ler role real do Firestore (não assumir 'member')
+    let role: AppUser['role'] = 'member';
+    if (fbDb) {
+      const userSnap = await getDoc(doc(fbDb, 'users', cred.user.uid));
+      if (userSnap.exists() && userSnap.data().role === 'admin') role = 'admin';
+    }
     const appUser: AppUser = {
       uid: cred.user.uid,
       name: cred.user.displayName ?? email.split('@')[0],
       email: cred.user.email ?? email,
-      role: 'member',
+      role,
       active: true,
       createdAt: new Date().toISOString(),
     };

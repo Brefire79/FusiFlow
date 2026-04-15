@@ -23,7 +23,7 @@ export default function UpdatePrompt() {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[200] flex items-center justify-between gap-3 px-4 py-3
+      className="fixed top-0 left-0 right-0 z-200 flex items-center justify-between gap-3 px-4 py-3
                  text-white shadow-xl"
       style={{
         background: 'linear-gradient(135deg, #D07D5F 0%, #2ABEDD 100%)',
