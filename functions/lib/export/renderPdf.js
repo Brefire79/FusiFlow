@@ -1,0 +1,61 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.renderPdf = renderPdf;
+const pdfkit_1 = __importDefault(require("pdfkit"));
+/**
+ * Gera um PDF e retorna como Buffer.
+ */
+function renderPdf(bundle) {
+    return new Promise((resolve, reject) => {
+        const doc = new pdfkit_1.default({ margin: 50 });
+        const chunks = [];
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+        // Title
+        doc
+            .fontSize(24)
+            .fillColor('#D07D5F')
+            .text('FusiFlow', { align: 'center' })
+            .moveDown(0.3);
+        doc
+            .fontSize(10)
+            .fillColor('#938586')
+            .text('Gestão de Projetos AMB FUSI AÍ', { align: 'center' })
+            .moveDown(1.5);
+        // Project info
+        const p = bundle.project;
+        const membersCount = Array.isArray(p.members)
+            ? p.members.length
+            : Object.keys(p.members ?? {}).length;
+        doc.fontSize(18).fillColor('#D4CCC0').text(p.title || 'Projeto').moveDown(0.5);
+        doc.fontSize(10).fillColor('#938586');
+        doc.text(`Status: ${p.status}  |  Fase: ${p.phase}  |  Versão: ${p.version}`);
+        doc.text(`Tags: ${(p.tags || []).join(', ')}`);
+        doc.text(`Membros: ${membersCount}`);
+        doc.moveDown(1);
+        // Docs
+        doc.fontSize(14).fillColor('#2ABEDD').text('Documentos').moveDown(0.5);
+        for (const d of bundle.docs) {
+            doc.fontSize(12).fillColor('#D4CCC0').text(d.title || 'Sem título').moveDown(0.3);
+            doc.fontSize(9).fillColor('#938586').text(d.content || '', { lineGap: 2 });
+            doc.moveDown(1);
+        }
+        // History (últimos 20)
+        if (bundle.history.length > 0) {
+            doc.addPage();
+            doc.fontSize(14).fillColor('#2ABEDD').text('Histórico').moveDown(0.5);
+            for (const h of bundle.history.slice(0, 20)) {
+                doc
+                    .fontSize(9)
+                    .fillColor('#D4CCC0')
+                    .text(`[${h.at}] ${h.actorName}: ${h.changesSummary}`);
+            }
+        }
+        doc.end();
+    });
+}
+//# sourceMappingURL=renderPdf.js.map
