@@ -34,7 +34,7 @@ const SECTIONS: Section[] = [
     title: 'Deploy',
     items: [
       { id: 'fb-proj',   label: 'Criar projeto no Firebase Console',            desc: 'console.firebase.google.com',                fixed: true },
-      { id: 'fb-auth',   label: 'Ativar Auth (Email/Password)',                  desc: 'Firebase Console → Authentication' },
+      { id: 'fb-auth',   label: 'Ativar Auth (Email/Password)',                  desc: 'Firebase Console → Authentication',           fixed: true },
       { id: 'fb-db',     label: 'Ativar Firestore + Storage',                    desc: 'Regras já configuradas em firestore.rules',   fixed: true },
       { id: 'netlify',   label: 'Configurar variáveis no Netlify',               desc: 'VITE_FIREBASE_* no painel de ambiente' },
       { id: 'functions', label: 'Fazer deploy das Cloud Functions',              desc: 'firebase deploy --only functions' },
